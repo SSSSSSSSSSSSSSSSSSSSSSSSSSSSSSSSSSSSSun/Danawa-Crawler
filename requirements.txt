@@ -1,0 +1,4 @@
+selenium==4.22.0
+PyGithub==1.51
+pytz==2020.1
+urllib3==2.0.1
