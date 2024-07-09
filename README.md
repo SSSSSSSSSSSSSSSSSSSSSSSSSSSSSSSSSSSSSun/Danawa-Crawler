@@ -4,7 +4,7 @@
 
 Actions의 큐 대기시간이 존재해 보통 5~20분정도 기다려야 완료됩니다
 
-[sammy310/Danawa-Crawler](https://github.com/sammy310/Danawa-Crawler)를 포크해서 만들었습니다
+[sammy310/Danawa-Crawler](https://github.com/sammy310/Danawa-Crawler)를 클론해서 만들었습니다
 
 ## [크롤링 데이터](https://github.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/tree/master/crawl_data) / [(구글 스프레드시트)](https://docs.google.com/spreadsheets/d/173z04QolUloLeTZMjXjdQvW6NQFzGrxdr4PXjKt8_EI/edit?usp=sharing)
 - [CPU](https://github.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/blob/master/crawl_data/CPU.csv) / [(Raw Data)](https://raw.githubusercontent.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/master/crawl_data/CPU.csv)
