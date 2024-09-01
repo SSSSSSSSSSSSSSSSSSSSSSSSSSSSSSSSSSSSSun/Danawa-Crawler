@@ -29,7 +29,6 @@ jobs:
     - name: Install Chromdriver
       run: |
         driver_downloader.bat
-        }
     - name: Run Crawler
       run: |
         python danawa_crawler.py
