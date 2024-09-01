@@ -51,7 +51,7 @@ TIMEZONE = 'Asia/Seoul'
 
 # CHROMEDRIVER_PATH = 'chromedriver_94.exe'
 # CHROMEDRIVER_PATH = 'chromedriver'
-CHROMEDRIVER_PATH = 'chromedriver/chromedriver-win64/chromedriver.exe'
+CHROMEDRIVER_PATH = 'chromedriver-win64/chromedriver.exe'
 
 DATA_DIVIDER = '---'
 DATA_REMARK = '//'

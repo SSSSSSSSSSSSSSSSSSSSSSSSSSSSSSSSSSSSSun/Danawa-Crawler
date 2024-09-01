@@ -28,15 +28,7 @@ jobs:
         if (Test-Path "requirements.txt") { pip install -r .\requirements.txt }
     - name: Install Chromdriver
       run: |
-        if (-not (Test-Path "chromedriver/chromedriver-win64/chromedriver.exe")) {
-          Write-Output 'chromedriver not exist!'
-          
-          Invoke-WebRequest -Uri "https://storage.googleapis.com/chrome-for-testing-public/126.0.6478.126/win64/chromedriver-win64.zip" -Outfile "chromedriver.zip"
-          Expand-Archive -LiteralPath chromedriver.zip
-          remove-Item -Path chromedriver.zip -Force
-        }
-        else {
-          Write-Output 'chromedriver already exist!'
+        driver_downloader.bat
         }
     - name: Run Crawler
       run: |
