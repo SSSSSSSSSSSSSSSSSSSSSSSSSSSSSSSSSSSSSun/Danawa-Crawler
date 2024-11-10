@@ -63,6 +63,7 @@ STR_NAME = 'name'
 STR_URL = 'url'
 STR_CRAWLING_PAGE_SIZE = 'crawlingPageSize'
 
+MAX_RETRIES = 3
 
 class DanawaCrawler:
     def __init__(self):
@@ -76,7 +77,7 @@ class DanawaCrawler:
 
     def StartCrawling(self):
         self.chrome_option = webdriver.ChromeOptions()
-        self.chrome_option.add_argument('--headless')
+        # self.chrome_option.add_argument('--headless')
         self.chrome_option.add_argument('--window-size=1920,1080')
         self.chrome_option.add_argument('--start-maximized')
         self.chrome_option.add_argument('--disable-gpu')
@@ -96,94 +97,108 @@ class DanawaCrawler:
 
         print('Crawling Start : ' + crawlingName)
 
-        # data
-        crawlingFile = open(f'{crawlingName}.csv', 'w', newline='', encoding='utf8')
-        crawlingData_csvWriter = csv.writer(crawlingFile)
-        crawlingData_csvWriter.writerow([self.GetCurrentDate().strftime('%Y-%m-%d %H:%M:%S')])
-        
-        try:
-            browser = webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=self.chrome_option)
-            browser.implicitly_wait(5)
-            browser.get(crawlingURL)
 
-            browser.find_element(By.XPATH,'//option[@value="90"]').click()
-            wait = WebDriverWait(browser, 5)
-            wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
-                                                        
-            crawlingSize = browser.find_element(By.CLASS_NAME,'list_num').text.strip()
-            crawlingSize = crawlingSize.replace(",","").lstrip('(').rstrip(')')
-            crawlingSize = ceil(int(crawlingSize)/90)
+        retry_count = 0
 
-            for i in range(0, crawlingSize):
+        while retry_count < MAX_RETRIES:
+            # data
+            crawlingFile = open(f'{crawlingName}.csv', 'w', newline='', encoding='utf8')
+            crawlingData_csvWriter = csv.writer(crawlingFile)
+            crawlingData_csvWriter.writerow([self.GetCurrentDate().strftime('%Y-%m-%d %H:%M:%S')])
+            
+            try:
+                browser = webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=self.chrome_option)
+                browser.implicitly_wait(5)
+                browser.get(crawlingURL)
 
-                print("Start - " + crawlingName + " " + str(i+1) + "/" + str(crawlingSize) + " Page Start")
-
-                if i == 0:
-                    browser.find_element(By.XPATH,'//li[@data-sort-method="NEW"]').click()
-                elif i > 0:
-                    if i % 10 == 0:
-                        browser.find_element(By.XPATH,'//a[@class="edge_nav nav_next"]').click()
-                    else:
-                        browser.find_element(By.XPATH,'//a[@class="num "][%d]'%(i%10)).click()
+                browser.find_element(By.XPATH,'//option[@value="90"]').click()
+                wait = WebDriverWait(browser, 5)
                 wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
-                
-                # Get Product List
-                productListDiv = browser.find_element(By.XPATH,'//div[@class="main_prodlist main_prodlist_list"]')
-                products = productListDiv.find_elements(By.XPATH,'//ul[@class="product_list"]/li')
+                                                            
+                crawlingSize = browser.find_element(By.CLASS_NAME,'list_num').text.strip()
+                crawlingSize = crawlingSize.replace(",","").lstrip('(').rstrip(')')
+                crawlingSize = ceil(int(crawlingSize)/90)
 
-                for product in products:
-                    if not product.get_attribute('id'):
-                        continue
+                for i in range(0, crawlingSize):
 
-                    # ad
-                    if 'prod_ad_item' in product.get_attribute('class').split(' '):
-                        continue
-                    if product.get_attribute('id').strip().startswith('ad'):
-                        continue
+                    print("Start - " + crawlingName + " " + str(i+1) + "/" + str(crawlingSize) + " Page Start")
 
-
-
-
-                    productName = product.find_element(By.XPATH,'./div/div[2]/p/a').text.strip()
-                    productPrices = product.find_elements(By.XPATH,'./div/div[3]/ul/li')
-                    productPriceStr = ''
-
-                    for productPrice in productPrices:
-
-                        # Check Hide
-                        if 'display: none' in productPrice.get_attribute('style'):
-                            # product.find_element(By.XPATH,'./div/div[3]/p/a').click()
-                            browser.execute_script("arguments[0].style.display = 'block';", productPrice)
-
-                        # Default
-                        productType = productPrice.find_element(By.XPATH,'./div/p').text.strip()
-
-                        # Remove rank text
-                        # 1위, 2위 ...
-                        productType = self.RemoveRankText(productType)
-
-                        # like Ram/HDD/SSD
-                        # HDD : '6TB\n25원/1GB' -> 
-                        productTypeList = list()
-                        if '\n' in productType:
-                            productTypeList = productType.split('\n')
+                    if i == 0:
+                        browser.find_element(By.XPATH,'//li[@data-sort-method="NEW"]').click()
+                    elif i > 0:
+                        if i % 10 == 0:
+                            browser.find_element(By.XPATH,'//a[@class="edge_nav nav_next"]').click()
                         else:
-                            productTypeList = [productType, ""]
-                        
-                        mall = productPrice.find_element(By.XPATH,'./p[1]').text.strip()   
-                        price = productPrice.find_element(By.XPATH,'./p[2]/a/strong').text.replace(",","").strip()
+                            browser.find_element(By.XPATH,'//a[@class="num "][%d]'%(i%10)).click()
+                    wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
+                    
+                    # Get Product List
+                    productListDiv = browser.find_element(By.XPATH,'//div[@class="main_prodlist main_prodlist_list"]')
+                    products = productListDiv.find_elements(By.XPATH,'//ul[@class="product_list"]/li')
 
-                        productId = productPrice.get_attribute('id')[18:]
+                    for product in products:
+                        if not product.get_attribute('id'):
+                            continue
 
-                        crawlingData_csvWriter.writerow([productId, productName, productTypeList[0], price, mall, productTypeList[1]])
+                        # ad
+                        if 'prod_ad_item' in product.get_attribute('class').split(' '):
+                            continue
+                        if product.get_attribute('id').strip().startswith('ad'):
+                            continue
 
 
-        except Exception as e:
-            print('Error - ' + crawlingName + ' ->')
-            print(traceback.format_exc())
-            self.errorList.append(crawlingName)
 
-        crawlingFile.close()
+
+                        productName = product.find_element(By.XPATH,'./div/div[2]/p/a').text.strip()
+                        productPrices = product.find_elements(By.XPATH,'./div/div[3]/ul/li')
+                        productPriceStr = ''
+
+                        for productPrice in productPrices:
+
+                            # Check Hide
+                            if 'display: none' in productPrice.get_attribute('style'):
+                                # product.find_element(By.XPATH,'./div/div[3]/p/a').click()
+                                browser.execute_script("arguments[0].style.display = 'block';", productPrice)
+
+                            # Default
+                            productType = productPrice.find_element(By.XPATH,'./div/p').text.strip()
+
+                            # Remove rank text
+                            # 1위, 2위 ...
+                            productType = self.RemoveRankText(productType)
+
+                            # like Ram/HDD/SSD
+                            # HDD : '6TB\n25원/1GB' -> 
+                            productTypeList = list()
+                            if '\n' in productType:
+                                productTypeList = productType.split('\n')
+                            else:
+                                productTypeList = [productType, ""]
+                            
+                            mall = productPrice.find_element(By.XPATH,'./p[1]').text.strip()   
+                            price = productPrice.find_element(By.XPATH,'./p[2]/a/strong').text.replace(",","").strip()
+
+                            productId = productPrice.get_attribute('id')[18:]
+
+                            crawlingData_csvWriter.writerow([productId, productName, productTypeList[0], price, mall, productTypeList[1]])
+
+                crawlingFile.close()
+                break;
+                    
+            except Exception as e:
+                print('Error - ' + crawlingName + ' ->')
+                print(traceback.format_exc())
+                self.errorList.append(crawlingName)
+
+                crawlingFile.close()
+
+                if retry_count < MAX_RETRIES :
+                    retry_count += 1
+                    print('Retry ' + str(retry_count) + ' Start : ' + crawlingName)
+                    sleep(5)
+                else:
+                    print('Fail - ' + crawlingName)
+                    break
 
         print('Crawling Finish : ' + crawlingName)
 
