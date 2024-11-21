@@ -29,8 +29,8 @@ jobs:
     - name: Move ChromeDriver to New Location
       run: |
         mkdir -p $GITHUB_WORKSPACE/chromedriver-win64
-        mv C:\hostedtoolcache\windows\setup-chrome\chromedriver\stable\x64\chromedriver.exe $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe
-        echo "ChromeDriver moved to $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe"
+        mv C:\hostedtoolcache\windows\setup-chrome\chromedriver\stable\x64\chromedriver.exe $GITHUB_WORKSPACE/chromedriver-win64
+        echo "ChromeDriver moved to $GITHUB_WORKSPACE/chromedriver-win64"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
