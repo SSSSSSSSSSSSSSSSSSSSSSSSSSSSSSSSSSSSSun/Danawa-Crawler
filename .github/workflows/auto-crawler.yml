@@ -19,7 +19,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: browser-actions/setup-chrome@v1
-    - run: chrome --version
+      with:
+        chrome-version: stable
+        install-dependencies: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
