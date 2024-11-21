@@ -1,6 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM Download Chrome
+powershell -Command (new-object System.Net.WebClient).DownloadFile('http://dl.google.com/chrome/install/375.126/chrome_installer.exe', $env:TEMP+'\chrome.exe'); & start %temp%\chrome.exe
+
 REM Clean
 del /Q chromedriver-win64
 
