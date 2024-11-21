@@ -18,21 +18,34 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: browser-actions/setup-chrome@v1
+
+    - name: Set up Chrome
+      uses: browser-actions/setup-chrome@v1
       with:
         chrome-version: stable
+        install-chromedriver: true
         install-dependencies: true
+
+    - name: Save Chrome Path to Variable
+      run: |
+        echo "CHROMEDRIVER_PATH=${{ steps.setup-chrome.outputs.chromedriver-path }}" >> $GITHUB_ENV
+
+    - name: Move ChromeDriver to New Location
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/chromedriver-win64
+        mv $CHROMEDRIVER_PATH $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe
+        echo "ChromeDriver moved to $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe"
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         if (Test-Path "requirements.txt") { pip install -r .\requirements.txt }
-    - name: Install Chromedriver
-      run: |
-        .\driver_downloader.bat
+
     - name: Run Crawler
       run: |
         python danawa_crawler.py
