@@ -26,18 +26,10 @@ jobs:
         install-chromedriver: true
         install-dependencies: true
 
-    - name: Check if ChromeDriver path is available
-      run: |
-        echo "Chromedriver Path: ${{ steps.setup-chrome.outputs.chrome-path }}"
-
-    - name: Save Chrome Path to Variable
-      run: |
-        echo "CHROMEDRIVER_PATH=${{ steps.setup-chrome.outputs.chromedriver-path }}" >> $GITHUB_ENV
-
     - name: Move ChromeDriver to New Location
       run: |
         mkdir -p $GITHUB_WORKSPACE/chromedriver-win64
-        mv $CHROMEDRIVER_PATH $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe
+        mv C:\hostedtoolcache\windows\setup-chrome\chromedriver\stable\x64\chromedriver.exe $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe
         echo "ChromeDriver moved to $GITHUB_WORKSPACE/chromedriver-win64/chromedriver.exe"
 
     - name: Set up Python ${{ matrix.python-version }}
