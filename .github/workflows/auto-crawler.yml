@@ -28,7 +28,7 @@ jobs:
 
     - name: Check if ChromeDriver path is available
       run: |
-        echo "Chromedriver Path: ${{ steps.setup-chrome.outputs.chromedriver-path }}"
+        echo "Chromedriver Path: ${{ steps.setup-chrome.outputs.chrome-path }}"
 
     - name: Save Chrome Path to Variable
       run: |
