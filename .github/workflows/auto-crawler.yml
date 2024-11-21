@@ -25,8 +25,13 @@ jobs:
         chrome-version: stable
         install-chromedriver: true
         install-dependencies: true
+
+    - name: Check if ChromeDriver path is available
       run: |
         echo "Chromedriver Path: ${{ steps.setup-chrome.outputs.chromedriver-path }}"
+
+    - name: Save Chrome Path to Variable
+      run: |
         echo "CHROMEDRIVER_PATH=${{ steps.setup-chrome.outputs.chromedriver-path }}" >> $GITHUB_ENV
 
     - name: Move ChromeDriver to New Location
