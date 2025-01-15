@@ -22,13 +22,13 @@ jobs:
     - name: Set up Chrome
       uses: browser-actions/setup-chrome@v1
       with:
-        chrome-version: 121.0.6100.0
+        chrome-version: latest
         install-chromedriver: true
         install-dependencies: true
 
     - name: Move ChromeDriver to New Location
       run: |
-        Move-Item -Path "C:\hostedtoolcache\windows\setup-chrome\chromedriver\121.0.6100.0\x64\chromedriver.exe" -Destination "$env:GITHUB_WORKSPACE\chromedriver.exe" -Force
+        Move-Item -Path "C:\hostedtoolcache\windows\setup-chrome\chromedriver\latest\x64\chromedriver.exe" -Destination "$env:GITHUB_WORKSPACE\chromedriver.exe" -Force
       shell: pwsh
 
     - name: Set up Python ${{ matrix.python-version }}
