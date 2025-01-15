@@ -28,7 +28,7 @@ jobs:
 
     - name: Move ChromeDriver to New Location
       run: |
-        Move-Item -Path "C:\hostedtoolcache\windows\setup-chrome\chromedriver\latest\x64\chromedriver.exe" -Destination "$env:GITHUB_WORKSPACE\chromedriver.exe" -Force
+        Move-Item -Path "C:\hostedtoolcache\windows\setup-chrome\chromedriver\1406625\x64\chromedriver.exe" -Destination "$env:GITHUB_WORKSPACE\chromedriver.exe" -Force
       shell: pwsh
 
     - name: Set up Python ${{ matrix.python-version }}
