@@ -82,7 +82,7 @@ class DanawaCrawler:
         self.chrome_option.add_argument('--start-maximized')
         self.chrome_option.add_argument('--disable-gpu')
         self.chrome_option.add_argument('lang=ko=KR')
-        self.chrome_option.binary_location = "C:/Program Files/Google/Chrome Beta/Application/chrome.exe"
+        self.chrome_option.binary_location = "C:/hostedtoolcache/windows/setup-chrome/chromium/131.0.6778.264/x64/chrome.exe"
         if __name__ == '__main__':
             pool = Pool()
             pool.map(self.CrawlingCategory, self.crawlingCategory)
