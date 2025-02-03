@@ -120,6 +120,9 @@ class DanawaCrawler:
                 crawlingSize = crawlingSize.replace(",","").lstrip('(').rstrip(')')
                 crawlingSize = ceil(int(crawlingSize)/90)
 
+                if crawlingSize > 22:
+                    crawlingSize = 22
+                
                 for i in range(0, crawlingSize):
 
                     print("Start - " + crawlingName + " " + str(i+1) + "/" + str(crawlingSize) + " Page Start")
