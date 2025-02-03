@@ -17,7 +17,7 @@ Actions의 큐 대기시간이 존재해 보통 5~20분정도 기다려야 완�
 - [하드디스크](https://github.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/blob/master/crawl_data/HDD.csv) / [(Raw Data)](https://raw.githubusercontent.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/master/crawl_data/HDD.csv)
 - [케이스](https://github.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/blob/master/crawl_data/Case.csv) / [(Raw Data)](https://raw.githubusercontent.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/master/crawl_data/Case.csv)
 - [파워서플라이](https://github.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/blob/master/crawl_data/PSU.csv) / [(Raw Data)](https://raw.githubusercontent.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/master/crawl_data/PSU.csv)
-
+- [노트](https://github.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/blob/master/crawl_data/Laptop.csv) / [(Raw Data)](https://raw.githubusercontent.com/SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler/master/crawl_data/Laptop.csv)
 ---
 
 ### 제작에 사용된 것들
