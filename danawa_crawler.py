@@ -46,6 +46,9 @@ STR_CRAWLING_PAGE_SIZE = 'crawlingPageSize'
 
 MAX_RETRIES = 3
 
+def safe_click(browser, element):
+    browser.execute_script("arguments[0].click();", element)
+
 class DanawaCrawler:
     def __init__(self):
         self.errorList = list()
@@ -93,7 +96,9 @@ class DanawaCrawler:
                 browser.implicitly_wait(5)
                 browser.get(crawlingURL)
 
-                browser.find_element(By.XPATH,'//option[@value="90"]').click()
+                target = browser.find_element(By.XPATH,'//option[@value="90"]')
+                safe_click(browser, target)
+
                 wait = WebDriverWait(browser, 5)
                 wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
                                                             
@@ -109,12 +114,15 @@ class DanawaCrawler:
                     print("Start - " + crawlingName + " " + str(i+1) + "/" + str(crawlingSize) + " Page Start")
 
                     if i == 0:
-                        browser.find_element(By.XPATH,'//li[@data-sort-method="NEW"]').click()
+                        target = browser.find_element(By.XPATH,'//li[@data-sort-method="NEW"]')
+                        safe_click(browser, target)
                     elif i > 0:
                         if i % 10 == 0:
-                            browser.find_element(By.XPATH,'//a[@class="edge_nav nav_next"]').click()
+                            target = browser.find_element(By.XPATH,'//a[@class="edge_nav nav_next"]')
+                            safe_click(browser, target)
                         else:
-                            browser.find_element(By.XPATH,'//a[@class="num "][%d]'%(i%10)).click()
+                            target = browser.find_element(By.XPATH,'//a[@class="num "][%d]'%(i%10))
+                            safe_click(browser, target)
                     wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
                     
                     # Get Product List
