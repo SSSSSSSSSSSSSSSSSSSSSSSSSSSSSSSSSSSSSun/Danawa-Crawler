@@ -10,19 +10,6 @@ from datetime import datetime
 from datetime import timedelta
 from pytz import timezone
 
-
-# 구글 스프레드시트 저장
-# from oauth2client.service_account import ServiceAccountCredentials
-# import gspread
-
-# {DATA_PATH}/data.xlsx 파일로 저장
-# import openpyxl
-
-# googledrive 저장
-# import googledrive
-
-# from github import Github
-
 import csv
 import os
 import os.path
@@ -35,13 +22,7 @@ from multiprocessing import Pool
 
 
 
-PROCESS_COUNT = 6
-
-# GITHUB_TOKEN_KEY = 'MY_GITHUB_TOKEN'
-# GITHUB_REPOSITORY_NAME = 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSun/Danawa-Crawler'
-
-SHEET_KEYFILE = 'danawa-428617-f6496870d619.json'
-SHEET_NAME = 'DanawaData'
+#PROCESS_COUNT = 6
 
 CRAWLING_DATA_CSV_FILE = 'CrawlingCategory.csv'
 DATA_PATH = 'crawl_data'
@@ -304,101 +285,6 @@ class DanawaCrawler:
                 body += f'- {err}\n'
             labels = [repo.get_label('bug')]
             repo.create_issue(title=title, body=body, labels=labels)
-        
-    def CsvToXlsx(self):
-        print('.csv to .xlsx')
-
-        xlsxDataPath = f'{DATA_PATH}/data.xlsx'
-        wb = openpyxl.load_workbook(xlsxDataPath)
-
-        for crawlingValue in self.crawlingCategory:
-            dataName = crawlingValue[STR_NAME]
-            csvDataPath = f'{DATA_PATH}/{dataName}.csv'
-            
-
-            if not os.path.exists(csvDataPath):
-                continue
-            if not os.path.exists(xlsxDataPath):
-                print(xlsxDataPath + ' pass')
-                wb = openpyxl.Workbook()
-                wb.save(xlsxDataPath)
-                wb.close()
-            
-
-            # 데이터 초기화를 위해 시트 삭제
-            if dataName in wb.sheetnames:
-                wb.remove(wb[dataName])
-
-            wb.create_sheet(title=dataName)
-            ws = wb[dataName]
-
-            with open(csvDataPath, 'r', encoding='utf-8') as file:
-                reader = csv.reader(file)
-                for r_idx, row in enumerate(reader, 1):
-                    for c_idx, value in enumerate(row, 1):
-                        ws.cell(row=r_idx, column=c_idx, value=value)
-
-            wb.save(xlsxDataPath)
-            
-        wb.close()
-
-    def CsvToGspread(self):
-        print('.csv to gspread')
-
-        try:
-            # 인증 설정
-            scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-            creds = ServiceAccountCredentials.from_json_keyfile_name(SHEET_KEYFILE, scope)
-            client = gspread.authorize(creds)
-
-            spreadsheet = client.open(SHEET_NAME)
-
-            sheetList = spreadsheet.worksheets()
-
-
-        except Exception as e:
-            return
-
-        for crawlingValue in self.crawlingCategory:
-
-            dataName = crawlingValue[STR_NAME]
-            csvDataPath = f'{DATA_PATH}/{dataName}.csv'
-        
-            if not os.path.exists(csvDataPath):
-                continue
-
-            # 시트 존재 확인
-            if any(sheet.title == dataName for sheet in spreadsheet.worksheets()):
-                spreadsheet.worksheet(dataName).clear()
-            else:
-                spreadsheet.add_worksheet(title=dataName, rows='1', cols='1')
-
-            worksheet = spreadsheet.worksheet(dataName)
-
-            with open(csvDataPath, 'r', encoding='utf-8') as file:
-                reader = csv.reader(file)
-                # for r_idx, row in enumerate(reader, 1):
-                #     for c_idx, value in enumerate(row, 1):
-                #         worksheet.update_acell(r_idx, c_idx, value)
-
-                for row in reader:
-                    while True:
-                        try:
-                            worksheet.append_row(row)
-                            break;
-                        except gspread.exceptions.APIError as e:
-                            if "quota exceeded" in str(e).lower():
-                                print("API 제한 초과. 대기 중...")
-                                sleep(10)  # 10초 대기
-                            else:
-                                raise e
-
-    def CsvToGoogleDrive(self):
-        print('.csv to googledrive')
-        service = googledrive.connectDrive()
-        for crawlingValue in self.crawlingCategory:
-            dataName = f"{crawlingValue[STR_NAME]}.csv"
-            googledrive.uploadFile(service, dataName)
 
 
 if __name__ == '__main__':
