@@ -46,8 +46,13 @@ STR_CRAWLING_PAGE_SIZE = 'crawlingPageSize'
 
 MAX_RETRIES = 3
 
-def safe_click(browser, element):
-    browser.execute_script("arguments[0].click();", element)
+def safe_click(browser, locator, timeout=10):
+    element = WebDriverWait(browser, timeout).until(EC.element_to_be_clickable(locator))
+    try:
+        browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        element.click()
+    except Exception as e:
+        browser.execute_script("arguments[0].click();", element)
 
 class DanawaCrawler:
     def __init__(self):
