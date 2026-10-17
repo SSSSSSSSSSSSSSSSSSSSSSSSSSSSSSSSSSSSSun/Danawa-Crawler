@@ -12,26 +12,23 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 120
     strategy:
       matrix:
         python-version: [3.12]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Chrome
+      id: chrome
       uses: browser-actions/setup-chrome@v1
       with:
-        chrome-version: 131.0.6778.264
+        chrome-version: stable
         install-chromedriver: true
 
-    - name: Move ChromeDriver to New Location
-      run: |
-        Move-Item -Path "C:\hostedtoolcache\windows\setup-chrome\chromedriver\131.0.6778.264\x64\chromedriver.exe" -Destination "$env:GITHUB_WORKSPACE\chromedriver.exe" -Force
-      shell: pwsh
-
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -44,13 +41,26 @@ jobs:
       run: |
         python danawa_crawler.py
       env:
-        MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        CHROMEDRIVER_PATH: ${{ steps.chrome.outputs.chromedriver-path }}
+        PYTHONUNBUFFERED: '1'
+    - name: Upload failure diagnostics
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: crawler-diagnostics
+        path: diagnostics/
+        if-no-files-found: ignore
     - name: Commits
       run: |
         git config --local user.email "sty1393@gmail.com"
         git config --local user.name "Auto_Crawler_Bot"
-        git add --all
-        git commit -m "Bot - Auto Crawl | $(date -d '+9 hour' +'%Y-%m-%d %H:%M:%S')"
+        git add -- crawl_data/*.csv
+        git diff --cached --quiet
+        if ($LASTEXITCODE -eq 0) { exit 0 }
+        if ($LASTEXITCODE -ne 1) { throw "git diff failed" }
+        $stamp = [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, 'Korea Standard Time').ToString('yyyy-MM-dd HH:mm:ss')
+        git commit -m "Bot - Auto Crawl | $stamp"
     - name: Push
       uses: ad-m/github-push-action@master
       with:
