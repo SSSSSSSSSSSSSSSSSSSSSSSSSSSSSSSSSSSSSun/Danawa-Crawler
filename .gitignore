@@ -305,12 +305,10 @@ TEST/
 # should be stored in the .pubxml.user file.
 
 # End of https://www.gitignore.io/api/visualstudio
-/game/__pycache__
-/game/sever/mainthread/.vs
-/game/sever/mainthread/.vs
-/game/sever/mainthread/.vs
-game/sever/mainthread/.vs/mainthread/v17/.suo
-game/sever/mainthread/.vs/mainthread/v17/Browse.VC.db
-/game/sever/mainthread/mainthread/x64
-/game/sever/mainthread/mainthread/x64
-/game/sever/mainthread/mainthread/x64
+
+# Python cache and local crawler diagnostics
+__pycache__/
+*.py[cod]
+/diagnostics/
+/.test-deps/
+/.investigation/

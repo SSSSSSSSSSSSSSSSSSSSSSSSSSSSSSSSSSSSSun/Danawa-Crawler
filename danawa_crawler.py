@@ -20,6 +20,7 @@ from math import ceil
 from time import sleep
 
 from multiprocessing import Pool
+from danawa_parser import parse_product_rows
 
 
 
@@ -67,6 +68,7 @@ class DanawaCrawler:
 
     def StartCrawling(self):
         self.chrome_option = webdriver.ChromeOptions()
+        self.chrome_option.page_load_strategy = 'eager'
         self.chrome_option.add_argument('--headless=new')
         self.chrome_option.add_argument('--window-size=1920,1080')
         self.chrome_option.add_argument('--start-maximized')
@@ -105,96 +107,14 @@ class DanawaCrawler:
                 driver_path = os.environ.get('CHROMEDRIVER_PATH')
                 service = Service(driver_path) if driver_path else Service()
                 browser = webdriver.Chrome(service=service, options=self.chrome_option)
+                browser.command_executor.set_timeout(45)
                 browser.set_page_load_timeout(60)
                 browser.implicitly_wait(5)
                 browser.get(crawlingURL)
 
-                wait = WebDriverWait(browser, 30)
-                target = wait.until(EC.presence_of_element_located((By.XPATH, '//select[option[@value="90"]]')))
-                Select(target).select_by_value('90')
-                wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
-                                                            
-                crawlingSize = browser.find_element(By.CLASS_NAME,'list_num').text.strip()
-                crawlingSize = crawlingSize.replace(",","").lstrip('(').rstrip(')')
-                crawlingSize = ceil(int(crawlingSize)/90)
-                if crawlingSize == 0:
-                    raise RuntimeError('No products found: ' + browser.current_url)
-
-                if crawlingSize > 22:
-                    crawlingSize = 22
-                
-                for i in range(0, crawlingSize):
-
-                    print("Start - " + crawlingName + " " + str(i+1) + "/" + str(crawlingSize) + " Page Start")
-
-                    if i == 0:
-                        target = browser.find_element(By.XPATH,'//li[@data-sort-method="NEW"]')
-                        safe_click(browser, target)
-                    elif i > 0:
-                        if i % 10 == 0:
-                            target = browser.find_element(By.XPATH,'//a[@class="edge_nav nav_next"]')
-                            safe_click(browser, target)
-                        else:
-                            target = browser.find_element(By.XPATH, '//a[contains(concat(" ", normalize-space(@class), " "), " num ") and normalize-space(.)="%d"]' % (i+1))
-                            safe_click(browser, target)
-                    wait.until(EC.invisibility_of_element((By.CLASS_NAME, 'product_list_cover')))
-                    
-                    # Get Product List
-                    productListDiv = browser.find_element(By.XPATH,'//div[@class="main_prodlist main_prodlist_list"]')
-                    products = productListDiv.find_elements(By.XPATH,'.//ul[@class="product_list"]/li')
-                    page_row_count = row_count
-
-                    for product in products:
-                        if not product.get_attribute('id'):
-                            continue
-
-                        # ad
-                        if 'prod_ad_item' in product.get_attribute('class').split(' '):
-                            continue
-                        if product.get_attribute('id').strip().startswith('ad'):
-                            continue
-
-
-
-
-                        productName = product.find_element(By.XPATH,'./div/div[2]/p/a').text.strip()
-                        productPrices = product.find_elements(By.XPATH,'./div/div[3]/ul/li')
-                        productPriceStr = ''
-
-                        for productPrice in productPrices:
-
-                            # Check Hide
-                            if 'display: none' in productPrice.get_attribute('style'):
-                                # product.find_element(By.XPATH,'./div/div[3]/p/a').click()
-                                browser.execute_script("arguments[0].style.display = 'block';", productPrice)
-
-                            # Default
-                            productType = productPrice.find_element(By.XPATH,'./div/p').text.strip()
-
-                            # Remove rank text
-                            # 1위, 2위 ...
-                            productType = self.RemoveRankText(productType)
-
-                            # like Ram/HDD/SSD
-                            # HDD : '6TB\n25원/1GB' -> 
-                            productTypeList = list()
-                            if '\n' in productType:
-                                productTypeList = productType.split('\n')
-                            else:
-                                productTypeList = [productType, ""]
-                            
-                            mall = productPrice.find_element(By.XPATH,'./p[1]').text.strip()   
-                            price = productPrice.find_element(By.XPATH,'./p[2]/a/strong').text.replace(",","").strip()
-
-                            productId = productPrice.get_attribute('id')[18:]
-                            if not productId.isdigit():
-                                raise RuntimeError('Invalid product ID: ' + productId)
-
-                            crawlingData_csvWriter.writerow([productId, productName, productTypeList[0], price, mall, productTypeList[1]])
-                            row_count += 1
-
-                    if row_count == page_row_count:
-                        raise RuntimeError('No price rows on page: ' + str(i+1))
+                rows = self.CrawlProductPages(browser)
+                crawlingData_csvWriter.writerows(rows)
+                row_count = len(rows)
 
                 crawlingFile.close()
                 print(f'Crawling Finish : {crawlingName} ({row_count} rows)')
@@ -203,15 +123,7 @@ class DanawaCrawler:
             except Exception as e:
                 print('Error - ' + crawlingName + ' ->')
                 print(traceback.format_exc())
-                if browser is not None:
-                    try:
-                        os.makedirs('diagnostics', exist_ok=True)
-                        print(f'Page: {browser.current_url} | {browser.title}')
-                        browser.save_screenshot(f'diagnostics/{crawlingName}.png')
-                        with open(f'diagnostics/{crawlingName}.html', 'w', encoding='utf8') as diagnostic:
-                            diagnostic.write(browser.page_source)
-                    except Exception:
-                        print('Could not save browser diagnostics')
+                self.SaveDiagnostics(browser, crawlingName)
 
                 crawlingFile.close()
 
@@ -231,6 +143,84 @@ class DanawaCrawler:
                         print('Could not close browser')
 
         return False
+
+    def SaveDiagnostics(self, browser, name):
+        os.makedirs('diagnostics', exist_ok=True)
+        with open(f'diagnostics/{name}.log', 'w', encoding='utf8') as file:
+            file.write(traceback.format_exc())
+        if browser is None:
+            return
+        # Save each independently: a screenshot/title failure must not lose HTML.
+        for suffix, operation in [
+            ('html', lambda: browser.page_source),
+            ('url.txt', lambda: browser.current_url),
+            ('title.txt', lambda: browser.title),
+            ('png', lambda: browser.save_screenshot(f'diagnostics/{name}.png')),
+        ]:
+            try:
+                value = operation()
+                if suffix != 'png':
+                    with open(f'diagnostics/{name}.{suffix}', 'w', encoding='utf8') as file:
+                        file.write(value)
+            except Exception as error:
+                print(f'Diagnostic {suffix} failed: {error}')
+
+    def CrawlProductPages(self, browser, max_pages=22):
+        wait = WebDriverWait(browser, 45)
+        title_locator = (By.CSS_SELECTOR, '#productListArea [data-testid="ProductListTitle"] a')
+        wait.until(EC.visibility_of_element_located(title_locator))
+        pagination = '//*[@data-testid="ProductListPagination"]'
+        wait.until(EC.presence_of_element_located((By.XPATH, pagination)))
+        # These controls are hydrated by React after the initial HTML loads.
+        sort_locator = (By.XPATH, '//button[normalize-space(.)="신상품순"]')
+        safe_click(browser, sort_locator, timeout=30)
+        select = wait.until(EC.presence_of_element_located((By.XPATH, '//select[option[@value="90"]]')))
+        Select(select).select_by_value('90')
+        def page_size_applied(driver):
+            if driver.find_elements(By.CSS_SELECTOR, '#productListArea .animate-pulse'):
+                return False
+            navigation = driver.find_elements(By.XPATH, pagination)
+            if not navigation:
+                return False
+            titles = driver.find_elements(*title_locator)
+            # React can briefly retain the original 30-item list after the select
+            # reads 90. A short list is valid only when there is a single page.
+            more = driver.find_elements(By.XPATH, pagination + '//button[not(@disabled) and (normalize-space(.)="2" or @aria-label="다음 페이지 그룹")]')
+            return len(titles) >= 90 or not more
+        wait.until(page_size_applied)
+        all_rows = {}
+        previous_signature = None
+        for page in range(1, max_pages + 1):
+            # A selected page button alone can update before the product request finishes.
+            def ready(driver):
+                if driver.find_elements(By.CSS_SELECTOR, '#productListArea .animate-pulse'):
+                    return False
+                rows = parse_product_rows(driver.page_source)
+                signature = tuple(row[0] for row in rows)
+                return rows if rows and signature != previous_signature else False
+
+            rows = wait.until(ready)
+            # Reveal variants hidden behind the "other configurations" control.
+            for button in browser.find_elements(By.XPATH, '//*[@id="productListArea"]//button[starts-with(normalize-space(.),"다른 구성")]'):
+                if button.is_displayed():
+                    browser.execute_script('arguments[0].click();', button)
+            rows = parse_product_rows(browser.page_source)
+            if not rows:
+                raise RuntimeError(f'No priced products on page {page}')
+            previous_signature = tuple(row[0] for row in rows)
+            all_rows.update((row[0], row) for row in rows)
+            print(f'Page {page}: {len(rows)} price rows', flush=True)
+            if page == max_pages:
+                break  # Preserve the existing 22-page limit.
+            wait.until(EC.presence_of_element_located((By.XPATH, pagination)))
+            next_page = browser.find_elements(By.XPATH, pagination + f'//button[normalize-space(.)="{page+1}"]')
+            if not next_page:
+                next_page = browser.find_elements(By.XPATH, pagination + '//button[@aria-label="다음 페이지 그룹" and not(@disabled)]')
+            if not next_page:
+                break
+            next_page[0].click()
+            wait.until(EC.presence_of_element_located((By.XPATH, pagination + f'//button[@aria-current="page" and normalize-space(.)="{page+1}"]')))
+        return list(all_rows.values())
 
     def RemoveRankText(self, productText):
         if len(productText) < 2:

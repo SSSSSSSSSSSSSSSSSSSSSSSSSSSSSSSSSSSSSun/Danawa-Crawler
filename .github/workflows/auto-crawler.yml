@@ -37,6 +37,9 @@ jobs:
         python -m pip install --upgrade pip
         if (Test-Path "requirements.txt") { pip install -r .\requirements.txt }
 
+    - name: Test parser and data safety
+      run: python -m unittest test_data_safety test_danawa_parser
+
     - name: Run Crawler
       run: |
         python danawa_crawler.py
