@@ -24,7 +24,7 @@ if __name__ == '__main__':
             browser.command_executor.set_timeout(45)
             browser.set_page_load_timeout(60)
             try:
-                browser.get(category['url'])
+                crawler.OpenCategory(browser, category['url'])
                 rows = crawler.CrawlProductPages(browser, max_pages=args.pages)
                 assert rows and all(row[0].isdigit() and int(row[3]) > 0 for row in rows)
                 print(f"Smoke OK: {category['name']}, {len(rows)} rows", flush=True)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -110,7 +111,7 @@ class DanawaCrawler:
                 browser.command_executor.set_timeout(45)
                 browser.set_page_load_timeout(60)
                 browser.implicitly_wait(5)
-                browser.get(crawlingURL)
+                self.OpenCategory(browser, crawlingURL)
 
                 rows = self.CrawlProductPages(browser)
                 crawlingData_csvWriter.writerows(rows)
@@ -123,7 +124,7 @@ class DanawaCrawler:
             except Exception as e:
                 print('Error - ' + crawlingName + ' ->')
                 print(traceback.format_exc())
-                self.SaveDiagnostics(browser, crawlingName)
+                self.SaveDiagnostics(browser, f'{crawlingName}-attempt-{retry_count + 1}')
 
                 crawlingFile.close()
 
@@ -143,6 +144,26 @@ class DanawaCrawler:
                         print('Could not close browser')
 
         return False
+
+    def OpenCategory(self, browser, url):
+        # Chrome can acknowledge get() while still showing its startup blank tab.
+        # Retry navigation in the same session before retrying the entire category.
+        for attempt in range(1, 4):
+            browser.get(url)
+            try:
+                WebDriverWait(browser, 15).until(
+                    lambda driver: driver.current_url not in ('', 'data:,', 'about:blank')
+                )
+                return
+            except TimeoutException as error:
+                current_url = browser.current_url
+                if current_url not in ('', 'data:,', 'about:blank'):
+                    raise
+                print(f'Navigation stayed blank ({attempt}/3): {url}', flush=True)
+                if attempt == 3:
+                    raise RuntimeError(
+                        f'Navigation failed: requested {url}, current URL {current_url!r}'
+                    ) from error
 
     def SaveDiagnostics(self, browser, name):
         os.makedirs('diagnostics', exist_ok=True)
