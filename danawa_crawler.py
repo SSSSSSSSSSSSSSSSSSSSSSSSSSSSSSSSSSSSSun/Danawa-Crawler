@@ -216,19 +216,21 @@ class DanawaCrawler:
             def ready(driver):
                 if driver.find_elements(By.CSS_SELECTOR, '#productListArea .animate-pulse'):
                     return False
-                rows = parse_product_rows(driver.page_source)
-                signature = tuple(row[0] for row in rows)
-                return rows if rows and signature != previous_signature else False
+                titles = driver.find_elements(*title_locator)
+                if not titles:
+                    return False
+                signature = tuple(element.get_attribute('href') for element in titles)
+                # A page can contain only "price comparison pending" products.
+                # That is still a fully loaded page; it simply contributes no rows.
+                return signature if any(signature) and signature != previous_signature else False
 
-            rows = wait.until(ready)
+            signature = wait.until(ready)
             # Reveal variants hidden behind the "other configurations" control.
             for button in browser.find_elements(By.XPATH, '//*[@id="productListArea"]//button[starts-with(normalize-space(.),"다른 구성")]'):
                 if button.is_displayed():
                     browser.execute_script('arguments[0].click();', button)
             rows = parse_product_rows(browser.page_source)
-            if not rows:
-                raise RuntimeError(f'No priced products on page {page}')
-            previous_signature = tuple(row[0] for row in rows)
+            previous_signature = signature
             all_rows.update((row[0], row) for row in rows)
             print(f'Page {page}: {len(rows)} price rows', flush=True)
             if page == max_pages:
