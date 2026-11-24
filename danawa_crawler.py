@@ -70,7 +70,7 @@ class DanawaCrawler:
     def StartCrawling(self):
         self.chrome_option = webdriver.ChromeOptions()
         self.chrome_option.page_load_strategy = 'eager'
-        self.chrome_option.add_argument('--headless=new')
+        #self.chrome_option.add_argument('--headless=new')
         self.chrome_option.add_argument('--window-size=1920,1080')
         self.chrome_option.add_argument('--start-maximized')
         self.chrome_option.add_argument('--disable-gpu')
