@@ -9,7 +9,7 @@
 
 CSV를 변경하지 않는 실제 사이트 검증: `python smoke_crawler.py --category CPU --pages 2`
 
-크롤링은 GitHub의 Actions를 사용하여 매일 KST 0시, 9시, 12시, 15시, 18시, 21시에 실행되도록 설정하였습니다
+크롤링은 GitHub의 Actions를 사용하여 매일 KST 0시, 9시, 12시, 15시, 18시, 21시 17분에 실행되도록 설정하였습니다
 
 Actions의 큐 대기시간이 존재해 보통 5~20분정도 기다려야 완료됩니다
 
